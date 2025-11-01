@@ -1,0 +1,38 @@
+
+<!DOCTYPE html>
+<html lang="en">
+{% load static %}
+
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>ArtCollab - Galerie collaborative et générative pour artistes et auteurs</title>
+    <meta name="description" content="Plateforme collaborative de création littéraire et artistique, propulsée par l'IA générative.">
+    <meta name="keywords" content="art, littérature, collaboration, IA générative, création, galerie, gamification" />
+    
+    <meta name="msapplication-TileColor" content="#ffffff">
+    <meta name="theme-color" content="#ffffff">
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="{% static 'assets/img/favicon/homework.png' %}">
+    
+    <!-- Vendor CSS -->
+    <link rel="stylesheet" href="{% static 'assets/vendor/sweetalert2/dist/sweetalert2.min.css' %}">
+    <link rel="stylesheet" href="{% static 'assets/vendor/notyf/notyf.min.css' %}">
+    
+    <!-- Volt CSS -->
+    <link rel="stylesheet" href="{% static 'assets/css/volt.css' %}">
+    
+    <!-- Page-specific CSS -->
+    {% block stylesheets %}{% endblock stylesheets %}
+</head>
+<body>
+
+    {% block content %}{% endblock content %}
+
+    {% include 'includes/scripts.html' %}
+
+    <!-- Specific Page JS goes HERE  -->
+    {% block javascripts %}{% endblock javascripts %}  
+
+</body>
+</html>

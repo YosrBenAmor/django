@@ -1,0 +1,624 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="fr">
+
+<head> 
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <title>ArtCollab - Galerie collaborative et générative pour artistes et auteurs</title>
+    <meta name="description" content="Plateforme collaborative de création littéraire et artistique, propulsée par l'IA générative.">
+    <meta name="keywords" content="art, littérature, collaboration, IA générative, création, galerie, gamification" />
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="/static/assets/img/favicon/homework.png">
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Volt CSS -->
+    <link rel="stylesheet" href="/static/assets/css/volt.css">
+    
+    <style>
+        /* 🌟 Section Hero sans image de fond */
+.section-header {
+    background: var(--bs-primary); /* Utilise la couleur primaire du thème */
+    position: relative;
+    color: white;
+    text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+    min-height: 85vh;
+    display: flex;
+    align-items: center;
+}
+
+.section-header .container {
+    position: relative;
+    z-index: 2;
+}
+
+/* Supprimer le pseudo-élément avec l'overlay */
+.section-header::before {
+    display: none;
+}
+
+/* Conserver les particules flottantes */
+.floating-particles {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+    z-index: 1;
+    overflow: hidden;
+}
+
+.particle {
+    position: absolute;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 50%;
+    animation: float 15s infinite linear;
+}
+
+@keyframes float {
+    0% {
+        transform: translateY(0) rotate(0deg);
+        opacity: 0;
+    }
+    10% {
+        opacity: 1;
+    }
+    90% {
+        opacity: 1;
+    }
+    100% {
+        transform: translateY(-1000px) rotate(720deg);
+        opacity: 0;
+    }
+}
+
+        /* Galerie avec effet de zoom */
+        .gallery-item {
+            position: relative;
+            overflow: hidden;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+            height: 250px;
+        }
+
+        .gallery-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.5s ease;
+        }
+
+        .gallery-item:hover img {
+            transform: scale(1.1);
+        }
+
+        .gallery-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .gallery-item:hover .gallery-overlay {
+            opacity: 1;
+        }
+
+        /* Effet de dégradé animé pour les sections */
+        .bg-gradient-primary {
+            background: linear-gradient(-45deg, #4e54c8, #8f94fb, #4e54c8);
+            background-size: 400% 400%;
+            animation: gradient 15s ease infinite;
+        }
+
+        @keyframes gradient {
+            0% {
+                background-position: 0% 50%;
+            }
+            50% {
+                background-position: 100% 50%;
+            }
+            100% {
+                background-position: 0% 50%;
+            }
+        }
+
+        /* Animation d'apparition des éléments */
+        .fade-in {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: opacity 0.8s ease, transform 0.8s ease;
+        }
+
+        .fade-in.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Style pour les badges de gamification */
+        .badge-container {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .badge {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 15px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+            width: 120px;
+        }
+
+        .badge:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15);
+        }
+
+        .badge-icon {
+            font-size: 2rem;
+            margin-bottom: 10px;
+        }
+
+        /* Style pour les stats */
+        .stats-container {
+            display: flex;
+            justify-content: space-around;
+            flex-wrap: wrap;
+            margin-top: 30px;
+        }
+
+        .stat {
+            text-align: center;
+            padding: 20px;
+        }
+
+        .stat-number {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: #4e54c8;
+            display: block;
+        }
+
+        .stat-label {
+            font-size: 1rem;
+            color: #6c757d;
+        }
+
+        /* Amélioration du footer */
+        .footer {
+            background: #1a1a2e !important;
+        }
+
+        /* Boutons avec effet de brillance */
+        .btn-glow {
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .btn-glow:hover {
+            box-shadow: 0 0 15px rgba(255, 255, 255, 0.5);
+        }
+        
+    </style>
+</head>
+
+<body>
+    {% include 'includes/header.html' %}
+
+    <main>
+       <!-- 🌟 Section Hero avec particules flottantes -->
+<section class="section-header overflow-hidden pt-7 pt-lg-8 pb-9 pb-lg-12 bg-primary text-white">
+    <div class="floating-particles" id="particles-container"></div>
+    <div class="container">
+        <div class="row">
+            <div class="col-12 text-center fade-in">
+                <!-- Logo -->
+                <div class="mb-4">
+                    <img src="/static/assets/img/favicon/homework.png" alt="ArtCollab Logo" height="80" class="mb-3">
+                </div>
+                
+                <h1 class="fw-bolder display-3 mb-4">ArtCollab</h1>
+                <h2 class="lead fw-normal mb-4 fs-3">
+                    Plateforme collaborative en ligne où la créativité collective rencontre l'intelligence artificielle
+                </h2>
+                
+                
+                <!-- Boutons d'action -->
+                <div class="d-flex align-items-center justify-content-center mb-5 flex-wrap gap-3">
+                    <a href="{% url 'book_list' %}" class="btn btn-secondary btn-lg d-inline-flex align-items-center me-4 btn-glow">
+                        <svg class="icon icon-xs me-2" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M9 4.804A7.968 7.968 0 005.5 4c-1.255 0-2.443.29-3.5.804v10A7.969 7.969 0 015.5 14c1.669 0 3.218.51 4.5 1.385A7.962 7.962 0 0114.5 14c1.255 0 2.443.29 3.5.804v-10A7.968 7.968 0 0014.5 4c-1.255 0-2.443.29-3.5.804V12a1 1 0 11-2 0V4.804z"></path>
+                        </svg>
+                        Explorer la galerie
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        
+    </div>
+    <figure class="position-absolute bottom-0 left-0 w-100 d-none d-md-block mb-n2">
+        <svg class="home-pattern" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 3000 185.4">
+            <path d="M3000,0v185.4H0V0c496.4,115.6,996.4,173.4,1500,173.4S2503.6,115.6,3000,0z"></path>
+        </svg>
+    </figure>       
+</section>
+        <section class="books-container">
+        <div class="container">
+             <h1 class="h1 fw-bold mb-3 text-center">
+    Peut vous <span class="gradient-text">Plaire</span>
+</h1>
+{% if recommended_books %}
+    
+    <div class="row">
+    {% for book in recommended_books %}
+    <div class="col-md-6 col-lg-4" style="--animation-order: {{ forloop.counter }};">
+        <div class="book-card">
+            <div class="book-card-header d-flex justify-content-between align-items-center">
+                <h3 class="book-card-title mb-0 flex-grow-1">
+                    <i class="fas fa-book me-2"></i> {{ book.title }}
+                </h3>
+                <!-- Icônes panier et favoris -->
+                {% if request.user.id != book.author_id %}
+                    <div class="d-flex align-items-center gap-2 ms-2">
+                        <i class="fas fa-shopping-cart text-primary" 
+                            style="cursor:pointer; font-size: 1.1rem; padding: 8px;" 
+                            title="Ajouter au panier"
+                            onclick="addToCart({{ book.id }})"></i>
+
+                        <i id="heart-{{ book.id }}" class="fas fa-heart text-secondary"
+                            style="cursor:pointer; font-size: 1.1rem; padding: 8px;"
+                            title="Ajouter aux favoris"
+                            onclick="toggleFavorite({{ book.id }})"></i>
+                    </div>
+                {% endif %}
+            </div>
+            <div class="book-card-body">
+                <div class="book-meta">
+                    <i class="fas fa-user"></i>
+                    <strong class="me-1">Auteur:</strong>
+                    {{ book.author.get_full_name|default:book.author.username }}
+                </div>
+                <div class="book-meta">
+                    <i class="fas fa-tag"></i>
+                    <strong class="me-1">Genre:</strong> {{ book.genre }}
+                </div>
+                <div class="book-meta">
+                    <i class="fas fa-info-circle"></i>
+                    <strong class="me-1">Statut:</strong>
+                    <span class="book-status 
+                        {% if book.status == 'en_cours' %}status-en-cours
+                        {% elif book.status == 'termine' %}status-termine
+                        {% else %}status-archive{% endif %}">
+                        {% if book.status == 'en_cours' %}
+                            <i class="fas fa-spinner me-1"></i> En cours
+                        {% elif book.status == 'termine' %}
+                            <i class="fas fa-check me-1"></i> Terminé
+                        {% else %}
+                            <i class="fas fa-archive me-1"></i> Archivé
+                        {% endif %}
+                    </span>
+                </div>
+                <div class="book-meta">
+                    {% if book.price == 0 %}
+                        <i class="fas fa-gift"></i>
+                        <strong class="me-1">Prix:</strong> <span class="text-success">Gratuit</span>
+                    {% else %}
+                        <i class="fas fa-euro-sign"></i>
+                        <strong class="me-1">Prix:</strong> {{ book.price|floatformat:2 }} €
+                    {% endif %}
+                </div>
+                <div class="book-meta">
+                    <i class="fas fa-calendar-alt"></i>
+                    <strong class="me-1">Créé le:</strong> {{ book.created_at|date:"d/m/Y" }}
+                </div>
+                {% if book.synopsis %}
+                <div class="book-meta mt-3">
+                    <i class="fas fa-align-left"></i>
+                    <strong class="me-1">Synopsis:</strong>
+                </div>
+                <p class="text-muted small" style="max-height: 60px; overflow: hidden; text-overflow: ellipsis;">
+                    {{ book.synopsis|truncatewords:20 }}
+                </p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+ <section >
+        <div >
+{% else %}
+    <p>Aucune recommandation pour le moment.</p>
+{% endif %}
+
+        <!-- 💡 Features Section avec animation -->
+        <section id="features" class="section section-lg bg-white py-6">
+            <div class="container text-center mb-5 fade-in">
+                <h2 class="h1 fw-bold mb-3">Une expérience artistique collaborative et intelligente</h2>
+                <p class="lead text-muted">Découvrez les fonctionnalités clés d'ArtCollab</p>
+            </div>
+
+            <div class="container">
+                <div class="row text-center">
+                    <div class="col-md-4 mb-4 fade-in">
+                        <div class="card p-4 shadow-soft border-light h-100">
+                            <div class="icon icon-shape bg-primary text-white rounded-circle mx-auto mb-3">
+                                <i class="fas fa-lightbulb fa-2x"></i>
+                            </div>
+                            <h4>Idées littéraires et artistiques</h4>
+                            <p>Proposez vos concepts créatifs et invitez la communauté ou l'IA à les enrichir.</p>
+                        </div>
+                    </div>
+
+                    <div class="col-md-4 mb-4 fade-in">
+                        <div class="card p-4 shadow-soft border-light h-100">
+                            <div class="icon icon-shape bg-success text-white rounded-circle mx-auto mb-3">
+                                <i class="fas fa-robot fa-2x"></i>
+                            </div>
+                            <h4>IA Générative</h4>
+                            <p>Co-créez avec une IA capable de générer du texte, des visuels et des concepts originaux.</p>
+                        </div>
+                    </div>
+
+                    <div class="col-md-4 mb-4 fade-in">
+                        <div class="card p-4 shadow-soft border-light h-100">
+                            <div class="icon icon-shape bg-info text-white rounded-circle mx-auto mb-3">
+                                <i class="fas fa-palette fa-2x"></i>
+                            </div>
+                            <h4>Galerie vivante</h4>
+                            <p>Explorez des œuvres évolutives, interactives et co-construites en temps réel.</p>
+                        </div>
+                    </div>
+
+                    <div class="col-md-4 mb-4 fade-in">
+                        <div class="card p-4 shadow-soft border-light h-100">
+                            <div class="icon icon-shape bg-warning text-white rounded-circle mx-auto mb-3">
+                                <i class="fas fa-comments fa-2x"></i>
+                            </div>
+                            <h4>Espace d'échange</h4>
+                            <p>Discutez, partagez et améliorez vos créations avec d'autres artistes du monde entier.</p>
+                        </div>
+                    </div>
+
+                    <div class="col-md-4 mb-4 fade-in">
+                        <div class="card p-4 shadow-soft border-light h-100">
+                            <div class="icon icon-shape bg-danger text-white rounded-circle mx-auto mb-3">
+                                <i class="fas fa-history fa-2x"></i>
+                            </div>
+                            <h4>Versioning et suivi</h4>
+                            <p>Chaque contribution est enregistrée, traçable et valorisée dans l'évolution de l'œuvre.</p>
+                        </div>
+                    </div>
+
+                    <div class="col-md-4 mb-4 fade-in">
+                        <div class="card p-4 shadow-soft border-light h-100">
+                            <div class="icon icon-shape bg-secondary text-white rounded-circle mx-auto mb-3">
+                                <i class="fas fa-trophy fa-2x"></i>
+                            </div>
+                            <h4>Gamification & Certification</h4>
+                            <p>Gagnez des badges, sécurisez vos œuvres par une certification anti-plagiat.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+       
+
+        <!-- 🎮 Section Gamification -->
+        <section class="section section-lg bg-soft py-6">
+            <div class="container text-center mb-5 fade-in">
+                <h2 class="h1 fw-bold mb-3">Gamification et Récompenses</h2>
+                <p class="lead text-muted">Gagnez des badges en participant à la communauté créative</p>
+            </div>
+
+            <div class="container">
+                <div class="badge-container fade-in">
+                    <div class="badge">
+                        <div class="badge-icon text-primary">
+                            <i class="fas fa-seedling"></i>
+                        </div>
+                        <span>Débutant</span>
+                    </div>
+                    <div class="badge">
+                        <div class="badge-icon text-success">
+                            <i class="fas fa-users"></i>
+                        </div>
+                        <span>Collaborateur</span>
+                    </div>
+                    <div class="badge">
+                        <div class="badge-icon text-warning">
+                            <i class="fas fa-brain"></i>
+                        </div>
+                        <span>Générateur IA</span>
+                    </div>
+                    <div class="badge">
+                        <div class="badge-icon text-info">
+                            <i class="fas fa-paint-brush"></i>
+                        </div>
+                        <span>Artiste</span>
+                    </div>
+                    <div class="badge">
+                        <div class="badge-icon text-danger">
+                            <i class="fas fa-crown"></i>
+                        </div>
+                        <span>Maître</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 🖼️ Galerie Section avec effet de zoom -->
+        <section id="gallery" class="section section-lg bg-white py-6">
+            <div class="container text-center mb-5 fade-in">
+                <h2 class="h1 fw-bold mb-3">Galerie d'art collaborative</h2>
+                <p class="lead text-muted">Découvrez les créations évolutives de la communauté ArtCollab</p>
+            </div>
+
+            <div class="container">
+                <div class="row">
+                    <div class="col-md-4 mb-4 fade-in">
+                        <div class="gallery-item">
+                            <img src="https://images.unsplash.com/photo-1541961017774-22349e4a1262?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=600&q=80" alt="Œuvre collaborative 1">
+                            <div class="gallery-overlay">
+                                <h5>Rêves Numériques</h5>
+                                <p>Création collective de 12 artistes</p>
+                                <small>+ 34 contributions IA</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4 mb-4 fade-in">
+                        <div class="gallery-item">
+                            <img src="https://images.unsplash.com/photo-1500462918059-b1a0cb512f1d?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=600&q=80" alt="Œuvre collaborative 2">
+                            <div class="gallery-overlay">
+                                <h5>Métamorphose</h5>
+                                <p>Évolution sur 3 mois</p>
+                                <small>+ 28 contributions IA</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4 mb-4 fade-in">
+                        <div class="gallery-item">
+                            <img src="https://images.unsplash.com/photo-1541701494587-cb58502866ab?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=600&q=80" alt="Œuvre collaborative 3">
+                            <div class="gallery-overlay">
+                                <h5>Cosmos Partagé</h5>
+                                <p>Projet international</p>
+                                <small>+ 41 contributions IA</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="text-center mt-4 fade-in">
+                    <a href="{% url 'book_list' %}" class="btn btn-primary btn-lg">Voir toute la galerie</a>
+                </div>
+            </div>
+        </section>
+
+        <!-- 🚀 Call to Action avec dégradé animé -->
+        <section class="section section-lg bg-gradient-primary text-white text-center py-6">
+            <div class="container fade-in">
+                <h2 class="h1 mb-3">Rejoignez la révolution artistique générative</h2>
+                <p class="lead mb-4">Collaborez, créez et exposez vos œuvres dans un espace vivant et intelligent.</p>
+                <a href="/page-sign-up.html" class="btn btn-light btn-lg btn-glow">Commencer dès maintenant</a>
+            </div>
+        </section>
+    </main>
+
+    <footer class="footer bg-dark text-white py-5">
+        <div class="container text-center">
+            <img src="/static/assets/img/brand/light.svg" height="30" alt="ArtCollab Logo" class="mb-3">
+            <p class="text-muted">© 2025 ArtCollab – Création collaborative, IA générative et art protégé.</p>
+        </div>
+    </footer>
+    
+    <link rel="stylesheet" href="{% static 'assets/css/volt.css' %}">
+<link rel="stylesheet" href="{% static 'assets/css/books-custom.css' %}">
+<script src="{% static 'assets/js/volt.js' %}"></script>
+
+    <script>
+        // Animation d'apparition des éléments au défilement
+        document.addEventListener('DOMContentLoaded', function() {
+            // Création des particules flottantes
+            createParticles();
+            
+            // Animation des statistiques
+            animateStats();
+            
+            // Animation au scroll
+            const fadeElements = document.querySelectorAll('.fade-in');
+            
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('visible');
+                    }
+                });
+            }, { threshold: 0.1 });
+            
+            fadeElements.forEach(element => {
+                observer.observe(element);
+            });
+        });
+
+        // Fonction pour créer des particules flottantes
+        function createParticles() {
+            const container = document.getElementById('particles-container');
+            const particleCount = 30;
+            
+            for (let i = 0; i < particleCount; i++) {
+                const particle = document.createElement('div');
+                particle.classList.add('particle');
+                
+                // Taille aléatoire
+                const size = Math.random() * 20 + 5;
+                particle.style.width = `${size}px`;
+                particle.style.height = `${size}px`;
+                
+                // Position aléatoire
+                particle.style.left = `${Math.random() * 100}%`;
+                particle.style.top = `${Math.random() * 100}%`;
+                
+                // Délai d'animation aléatoire
+                particle.style.animationDelay = `${Math.random() * 15}s`;
+                
+                container.appendChild(particle);
+            }
+        }
+
+        // Animation des statistiques
+        function animateStats() {
+            const stats = [
+                { id: 'artworks-count', target: 1247, duration: 2000 },
+                { id: 'artists-count', target: 586, duration: 2000 },
+                { id: 'collaborations-count', target: 3892, duration: 2000 },
+                { id: 'ai-generations-count', target: 12457, duration: 2000 }
+            ];
+            
+            stats.forEach(stat => {
+                const element = document.getElementById(stat.id);
+                if (element) {
+                    animateValue(element, 0, stat.target, stat.duration);
+                }
+            });
+        }
+
+        // Fonction pour animer les valeurs numériques
+        function animateValue(element, start, end, duration) {
+            let startTimestamp = null;
+            const step = (timestamp) => {
+                if (!startTimestamp) startTimestamp = timestamp;
+                const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+                const value = Math.floor(progress * (end - start) + start);
+                element.textContent = value.toLocaleString();
+                if (progress < 1) {
+                    window.requestAnimationFrame(step);
+                }
+            };
+            window.requestAnimationFrame(step);
+        }
+    </script>
+</body>
+</html>

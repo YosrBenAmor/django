@@ -1,0 +1,305 @@
+{% extends "layouts/base-fullscreen.html" %}
+
+{% block title %} Sign IN {% endblock %}
+
+{% block stylesheets %}
+<style>
+/* Animation de fond dynamique avec livres */
+.fullscreen-bg {
+    background: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab);
+    background-size: 400% 400%;
+    animation: gradient 15s ease infinite;
+    width: 100%;
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
+}
+
+/* Animation du dégradé */
+@keyframes gradient {
+    0% {
+        background-position: 0% 50%;
+    }
+    50% {
+        background-position: 100% 50%;
+    }
+    100% {
+        background-position: 0% 50%;
+    }
+}
+
+/* Livres flottants animés */
+.floating-books {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+    z-index: 1;
+    overflow: hidden;
+}
+
+.book {
+    position: absolute;
+    font-size: 3rem;
+    opacity: 0.1;
+    animation: floatBook 20s infinite linear;
+    color: rgba(255, 255, 255, 0.3);
+}
+
+@keyframes floatBook {
+    0% {
+        transform: translateY(100vh) rotate(0deg);
+        opacity: 0;
+    }
+    10% {
+        opacity: 0.3;
+    }
+    90% {
+        opacity: 0.3;
+    }
+    100% {
+        transform: translateY(-100px) rotate(360deg);
+        opacity: 0;
+    }
+}
+
+/* Boîte du formulaire */
+.login-box {
+    background-color: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+    border-radius: 16px;
+    padding: 2.5rem;
+    width: 100%;
+    max-width: 450px;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    position: relative;
+    z-index: 2;
+    transform: translateY(0);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.login-box:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
+}
+
+/* En-tête avec logo */
+.login-header {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.logo {
+    height: 60px;
+    margin-bottom: 1rem;
+}
+
+/* Styles des champs de formulaire */
+.form-group {
+    margin-bottom: 1.5rem;
+}
+
+.form-group label {
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    color: #2d3748;
+}
+
+.input-group {
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.input-group-text {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border: none;
+    color: white;
+    padding: 0.75rem 1rem;
+}
+
+.form-control {
+    border: none;
+    padding: 0.75rem;
+    font-size: 1rem;
+    background: #f8f9fa;
+    transition: all 0.3s ease;
+}
+
+.form-control:focus {
+    background: white;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+/* Bouton de connexion */
+.btn-login {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border: none;
+    color: white;
+    padding: 0.75rem;
+    font-weight: 600;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+}
+
+.btn-login:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+}
+
+/* Liens */
+.small {
+    color: #667eea;
+    text-decoration: none;
+    transition: color 0.3s ease;
+}
+
+.small:hover {
+    color: #764ba2;
+}
+
+.fw-bold {
+    color: #667eea;
+    text-decoration: none;
+    transition: color 0.3s ease;
+}
+
+.fw-bold:hover {
+    color: #764ba2;
+}
+
+/* Responsive */
+@media (max-width: 576px) {
+    .login-box {
+        margin: 1rem;
+        padding: 2rem 1.5rem;
+    }
+    
+    .fullscreen-bg {
+        padding: 1rem;
+    }
+}
+</style>
+{% endblock stylesheets %}
+
+{% block content %}
+<main class="fullscreen-bg">
+    <!-- Livres flottants animés -->
+    <div class="floating-books" id="floatingBooks"></div>
+    
+    <div class="login-box">
+        <!-- En-tête avec logo -->
+        <div class="login-header">
+            <img src="/static/assets/img/favicon/homework.png" alt="ArtCollab Logo" class="logo">
+            <h1 class="mb-2 h3" style="color: #2d3748;">ArtCollab</h1>
+            <p class="text-muted">
+                {% if msg %}
+                    <span class="text-danger">{{ msg | safe }}</span>
+                {% else %}
+                    Connectez-vous à votre univers créatif
+                {% endif %}
+            </p>
+        </div>
+
+        <form method="post" action="">
+            {% csrf_token %}
+
+            <!-- Username -->
+            <div class="form-group">
+                <label for="username">Nom d'utilisateur</label>
+                <div class="input-group">
+                    <span class="input-group-text">
+                        <span class="fas fa-user-circle"></span>
+                    </span>
+                    {{ form.username }}
+                </div>
+            </div>
+
+            <!-- Password -->
+            <div class="form-group">
+                <label for="password">Mot de passe</label>
+                <div class="input-group">
+                    <span class="input-group-text">
+                        <span class="fas fa-unlock-alt"></span>
+                    </span>
+                    {{ form.password }}
+                </div>
+            </div>
+
+            <!-- Remember + Lost password -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="remember">
+                    <label class="form-check-label" for="remember">Se souvenir de moi</label>
+                </div>
+                <a href="/page-forgot-password.html" class="small">Mot de passe oublié ?</a>
+            </div>
+
+            <!-- Submit -->
+            <div class="d-grid">
+                <button type="submit" name="login" class="btn btn-login">Se connecter</button>
+            </div>
+        </form>
+
+        <!-- Register link -->
+        <div class="text-center mt-4 pt-3 border-top">
+            <span class="fw-normal text-muted">
+                Pas encore de compte ?
+                <a href="{% url 'register' %}" class="fw-bold">Créer un compte</a>
+            </span>
+        </div>
+    </div>
+</main>
+{% endblock content %}
+
+{% block javascripts %}
+<script>
+// Génération des livres flottants
+document.addEventListener('DOMContentLoaded', function() {
+    const floatingBooks = document.getElementById('floatingBooks');
+    const bookIcons = ['📚', '📖', '📕', '📗', '📘', '📙', '🔖', '📓'];
+    
+    for (let i = 0; i < 15; i++) {
+        const book = document.createElement('div');
+        book.classList.add('book');
+        book.innerHTML = bookIcons[Math.floor(Math.random() * bookIcons.length)];
+        
+        // Position aléatoire
+        book.style.left = `${Math.random() * 100}%`;
+        
+        // Taille aléatoire
+        const size = Math.random() * 2 + 1;
+        book.style.fontSize = `${size}rem`;
+        
+        // Délai d'animation aléatoire
+        book.style.animationDelay = `${Math.random() * 20}s`;
+        
+        // Durée d'animation aléatoire
+        book.style.animationDuration = `${15 + Math.random() * 20}s`;
+        
+        floatingBooks.appendChild(book);
+    }
+});
+
+// Effet de focus amélioré pour les champs
+document.addEventListener('DOMContentLoaded', function() {
+    const inputs = document.querySelectorAll('.form-control');
+    
+    inputs.forEach(input => {
+        input.addEventListener('focus', function() {
+            this.parentElement.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.2)';
+        });
+        
+        input.addEventListener('blur', function() {
+            this.parentElement.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.1)';
+        });
+    });
+});
+</script>
+{% endblock javascripts %}

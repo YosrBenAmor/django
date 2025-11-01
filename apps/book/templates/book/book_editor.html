@@ -1,0 +1,1934 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Éditeur - {{ book.title }}</title>
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" sizes="32x32" href="/static/assets/img/favicon/favicon-32x32.png">
+
+    <!-- Bootstrap 5 -->
+    <link type="text/css" href="/static/assets/css/volt.css" rel="stylesheet">
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Quill -->
+    <link href="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.snow.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.js"></script>
+
+    <style>
+        /* Toast Notifications */
+        .toast-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1100;
+            max-width: 350px;
+        }
+        
+        .toast {
+            background: rgba(40, 44, 60, 0.95);
+            backdrop-filter: blur(10px);
+            border: none;
+            border-radius: 10px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2);
+            color: #fff;
+            margin-bottom: 15px;
+            opacity: 0;
+            transform: translateX(100%);
+            transition: all 0.3s ease;
+            overflow: hidden;
+        }
+        
+        .toast.show {
+            opacity: 1;
+            transform: translateX(0);
+        }
+        
+        .toast-header {
+            background: rgba(0, 0, 0, 0.1);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            color: #fff;
+            font-weight: 600;
+            padding: 10px 15px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        
+        .toast-body {
+            padding: 15px;
+            font-size: 0.95rem;
+            line-height: 1.5;
+        }
+        
+        .toast-success .toast-header {
+            border-left: 4px solid #2dce89;
+        }
+        
+        .toast-error .toast-header {
+            border-left: 4px solid #f5365c;
+        }
+        
+        .toast-warning .toast-header {
+            border-left: 4px solid #fb6340;
+        }
+        
+        .toast-info .toast-header {
+            border-left: 4px solid #11cdef;
+        }
+        
+        .toast-close {
+            background: none;
+            border: none;
+            color: rgba(255, 255, 255, 0.6);
+            cursor: pointer;
+            font-size: 1.2rem;
+            line-height: 1;
+            padding: 0;
+            margin-left: 10px;
+            transition: color 0.2s;
+        }
+        
+        .toast-close:hover {
+            color: #fff;
+        }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            overflow-x: hidden;
+        }
+        
+        .editor-container {
+            display: flex;
+            height: 100vh;
+            flex-direction: column;
+        }
+        
+        .editor-header {
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(20px);
+            border-bottom: 2px solid rgba(255, 255, 255, 0.3);
+            padding: 20px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            z-index: 100;
+        }
+        
+        .editor-header-left {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            flex: 1;
+        }
+        
+        .back-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            padding: 10px 15px;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+        }
+        
+        .back-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateX(-5px);
+            color: white;
+        }
+        
+        .book-title-display {
+            color: white;
+            font-size: 1.5rem;
+            font-weight: 700;
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+        }
+        
+        .editor-header-right {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+        
+        .word-count {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 50px;
+            font-weight: 600;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            font-size: 0.95rem;
+        }
+        
+        .save-btn {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 50px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 1rem;
+            box-shadow: 0 8px 25px rgba(79, 172, 254, 0.4);
+        }
+        
+        .save-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 35px rgba(79, 172, 254, 0.6);
+        }
+        
+        .save-btn:active {
+            transform: translateY(-1px);
+        }
+        
+        .editor-body {
+            flex: 1;
+            display: flex;
+            overflow: hidden;
+            padding: 30px;
+            gap: 20px;
+            position: relative;
+        }
+        
+        .sidebar-toggle {
+            position: absolute;
+            right: 30px;
+            top: 30px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: none;
+            align if-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+            transition: all 0.3s ease;
+            z-index: 50;
+        }
+        
+        .sidebar-toggle:hover {
+            transform: scale(1.1);
+            box-shadow: 0 8px 30px rgba(102, 126, 234, 0.6);
+        }
+        
+        .sidebar-toggle.show {
+            display: flex;
+        }
+        
+        .editor-main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+        
+        .ai-toolbar {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 15px 20px;
+            border-bottom: 2px solid rgba(0, 0, 0, 0.1);
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        
+        .ai-toolbar-label {
+            color: white;
+            font-weight: 600;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-right: 10px;
+        }
+        
+        .ai-btn {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            padding: 8px 15px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            white-space: nowrap;
+        }
+        
+        .ai-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+        
+        .ai-btn:active {
+            transform: translateY(0);
+        }
+        
+        .ai-btn.loading {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        
+        .ai-suggestions-panel {
+            position: fixed;
+            right: 0;
+            top: 80px;
+            width: 350px;
+            height: calc(100vh - 80px);
+            background: white;
+            box-shadow: -5px 0 20px rgba(0, 0, 0, 0.2);
+            z-index: 35;
+            overflow-y: auto;
+            transform: translateX(400px);
+            transition: transform 0.3s ease;
+            border-left: 4px solid #667eea;
+        }
+        
+        .ai-suggestions-panel.visible {
+            transform: translateX(0);
+        }
+        
+        .ai-suggestions-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            font-weight: 700;
+            font-size: 1.1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .ai-suggestions-close {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: none;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+        
+        .ai-suggestions-close:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: scale(1.1);
+        }
+        
+        .ai-suggestions-content {
+            padding: 20px;
+        }
+        
+        .ai-suggestion-item {
+            background: #f8f9ff;
+            border-left: 4px solid #667eea;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-radius: 8px;
+        }
+        
+        .ai-suggestion-title {
+            font-weight: 700;
+            color: #667eea;
+            font-size: 0.95rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+        }
+        
+        .ai-suggestion-content {
+            color: #2d3142;
+            font-size: 0.9rem;
+            line-height: 1.6;
+        }
+        
+        .ai-suggestion-action {
+            margin-top: 10px;
+            display: flex;
+            gap: 8px;
+        }
+        
+        .ai-suggestion-btn {
+            flex: 1;
+            padding: 8px 12px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        
+        .ai-suggestion-btn.apply {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        .ai-suggestion-btn.apply:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        
+        .ai-suggestion-btn.dismiss {
+            background: #e0e0e0;
+            color: #2d3142;
+        }
+        
+        .ai-suggestion-btn.dismiss:hover {
+            background: #d0d0d0;
+        }
+        
+        .ai-loading {
+            text-align: center;
+            padding: 20px;
+            color: #667eea;
+        }
+        
+        .ai-spinner {
+            display: inline-block;
+            width: 30px;
+            height: 30px;
+            border: 3px solid rgba(102, 126, 234, 0.2);
+            border-top-color: #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .sidebar {
+            width: 300px;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            padding: 25px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+        
+        .sidebar.hidden {
+            transform: translateX(350px);
+            opacity: 0;
+            pointer-events: none;
+        }
+        
+        .sidebar-close-btn {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+        
+        .sidebar-close-btn:hover {
+            transform: scale(1.1);
+        }
+        
+        .sidebar-section {
+            border-bottom: 2px solid #f0f0f0;
+            padding-bottom: 20px;
+        }
+        
+        .sidebar-section:last-child {
+            border-bottom: none;
+        }
+        
+        .sidebar-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #2d3142;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .sidebar-title i {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .book-info {
+            background: linear-gradient(135deg, #f8f9ff 0%, #f0f0ff 100%);
+            padding: 15px;
+            border-radius: 15px;
+            border-left: 4px solid #667eea;
+        }
+        
+        .info-item {
+            margin-bottom: 10px;
+            font-size: 0.95rem;
+        }
+        
+        .info-item:last-child {
+            margin-bottom: 0;
+        }
+        
+        .info-label {
+            font-weight: 700;
+            color: #667eea;
+            display: block;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .info-value {
+            color: #2d3142;
+            margin-top: 3px;
+        }
+        
+        .stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+        
+        .stat-box {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px;
+            border-radius: 12px;
+            text-align: center;
+        }
+        
+        .stat-number {
+            font-size: 1.8rem;
+            font-weight: 700;
+        }
+        
+        .stat-label {
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            opacity: 0.9;
+        }
+        
+        .action-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        .action-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 15px;
+            border-radius: 12px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            font-size: 0.95rem;
+        }
+        
+        .action-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+        }
+        
+        .action-btn.secondary {
+            background: #f0f0f0;
+            color: #2d3142;
+        }
+        
+        .action-btn.secondary:hover {
+            background: #e0e0e0;
+        }
+        
+        @media (max-width: 1200px) {
+            .sidebar {
+                position: fixed;
+                right: 0;
+                top: 80px;
+                width: 300px;
+                height: calc(100vh - 80px);
+                border-radius: 0;
+                z-index: 40;
+                transform: translateX(350px);
+                opacity: 0;
+                pointer-events: none;
+            }
+            
+            .sidebar.visible {
+                transform: translateX(0);
+                opacity: 1;
+                pointer-events: all;
+            }
+            
+            .sidebar-toggle {
+                display: flex !important;
+            }
+            
+            .editor-body {
+                padding: 20px;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .editor-header {
+                flex-direction: column;
+                gap: 15px;
+                padding: 15px 20px;
+            }
+            
+            .editor-header-left {
+                width: 100%;
+            }
+            
+            .editor-header-right {
+                width: 100%;
+                justify-content: space-between;
+            }
+            
+            .editor-body {
+                padding: 15px;
+            }
+            
+            .book-title-display {
+                font-size: 1.2rem;
+            }
+        }
+
+        /* === ALERTES CUSTOM === */
+        .alert-custom {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            padding: 15px 25px;
+            border-radius: 50px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            font-weight: 500;
+            animation: slideIn 0.5s ease-out;
+            max-width: 400px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: white;
+        }
+
+        .alert-success { background: linear-gradient(135deg, #d4edda, #c3e6cb); color: #155724; }
+        .alert-warning { background: linear-gradient(135deg, #fff3cd, #ffeaa7); color: #856404; }
+        .alert-info    { background: linear-gradient(135deg, #d1ecf1, #bee5eb); color: #0c5460; }
+
+        @keyframes slideIn {
+            from { transform: translateX(400px); opacity: 0; }
+            to   { transform: translateX(0); opacity: 1; }
+        }
+
+        .btn-close {
+            background: none;
+            border: none;
+            font-size: 1.2rem;
+            cursor: pointer;
+            margin-left: auto;
+            color: inherit;
+            opacity: 0.7;
+        }
+
+        .btn-close:hover {
+            opacity: 1;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="editor-container">
+        <!-- Header -->
+        <div class="editor-header">
+            <div class="editor-header-left">
+                <a href="{% url 'book_list' %}" class="back-btn">
+                    <i class="fas fa-arrow-left"></i> Retour
+                </a>
+                <div class="book-title-display">
+                    <i class="fas fa-pen-fancy me-2"></i>{{ book.title }}
+                </div>
+            </div>
+            <div class="editor-header-right">
+                <div class="word-count">
+                    <i class="fas fa-file-alt me-2"></i><span id="wordCount">0</span> mots
+                </div>
+                <button class="save-btn" onclick="saveBook()">
+                    <i class="fas fa-save me-2"></i> Sauvegarder
+                </button>
+                <button class="ai-btn" onclick="checkWebPlagiarism()" title="Vérifier sur le web">
+    <i class="fas fa-globe"></i> Web
+</button>
+            </div>
+        </div>
+
+        <!-- Messages Django (non-AJAX) -->
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert-custom alert-{{ message.tags }}">
+                    {% if message.tags == 'success' %}
+                        <i class="fas fa-check-circle"></i>
+                    {% elif message.tags == 'warning' %}
+                        <i class="fas fa-exclamation-triangle"></i>
+                    {% else %}
+                        <i class="fas fa-info-circle"></i>
+                    {% endif %}
+                    {{ message }}
+                    <button type="button" class="btn-close" onclick="this.parentElement.remove()">×</button>
+                </div>
+            {% endfor %}
+        {% endif %}
+        
+        <!-- Body -->
+        <div class="editor-body">
+            <!-- Sidebar Toggle Button -->
+            <button class="sidebar-toggle" onclick="toggleSidebar()" title="Afficher/Masquer le panneau">
+                <i class="fas fa-chevron-left"></i>
+            </button>
+            
+            <!-- Main Editor -->
+            <div class="editor-main">
+                <!-- AI Toolbar -->
+                <div class="ai-toolbar">
+                    <span class="ai-toolbar-label">Assistance IA :</span>
+                    <button class="ai-btn" onclick="aiCorrectGrammar()" title="Corriger la grammaire">
+                        <i class="fas fa-spell-check"></i> Grammaire
+                    </button>
+                    <button class="ai-btn" onclick="aiGenerateSynopsis()" title="Générer un synopsis">
+                        <i class="fas fa-align-left"></i> Synopsis
+                    </button>
+                    <button class="ai-btn" onclick="aiAnalyzeSentiment()" title="Analyser le sentiment">
+                        <i class="fas fa-heart"></i> Sentiment
+                    </button>
+                    <button class="ai-btn" onclick="aiExtractKeywords()" title="Extraire les mots-clés">
+                        <i class="fas fa-tags"></i> Mots-clés
+                    </button>
+                    <button class="ai-btn" onclick="aiDetectGenre()" title="Détecter le genre">
+                        <i class="fas fa-book"></i> Genre
+                    </button>
+                    <button class="ai-btn" onclick="aiAnalyzeReadability()" title="Analyser la lisibilité">
+                        <i class="fas fa-chart-line"></i> Lisibilité
+                    </button>
+                    <button class="ai-btn" onclick="aiSuggestContinue()" title="Suggérer la suite du texte">
+                        <i class="fas fa-forward"></i> Continuer
+                    </button>
+                    <button class="ai-btn" onclick="aiRewrite()" title="Améliorer le texte">
+                        <i class="fas fa-magic"></i> Améliorer
+                    </button>
+                    <button class="ai-btn" onclick="aiSuggestTitles()" title="Proposer des titres">
+                        <i class="fas fa-heading"></i> Titres
+                    </button>
+                </div>
+                
+                <form id="editorForm" method="POST">
+                    {% csrf_token %}
+                    <input type="hidden" id="title" name="title" value="{{ book.title }}">
+                    <div id="editor"></div>
+                    <textarea id="content" name="content" style="display: none;"></textarea>
+                </form>
+            </div>
+            
+            <!-- AI Suggestions Panel -->
+            <div class="ai-suggestions-panel" id="aiSuggestionsPanel">
+                <div class="ai-suggestions-header">
+                    <span>Suggestions IA</span>
+                    <button class="ai-suggestions-close" onclick="closeAISuggestions()">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="ai-suggestions-content" id="aiSuggestionsContent">
+                    <p style="color: #a8b3cf; text-align: center; padding: 20px;">Cliquez sur un bouton IA pour voir les suggestions</p>
+                </div>
+            </div>
+            
+            <!-- Sidebar -->
+            <div class="sidebar" id="sidebar">
+                <button class="sidebar-close-btn" onclick="toggleSidebar()" title="Fermer">
+                    <i class="fas fa-times"></i>
+                </button>
+                
+                <div class="sidebar-section">
+                    <div class="sidebar-title">
+                        <i class="fas fa-info-circle"></i> Informations
+                    </div>
+                    <div class="book-info">
+                        <div class="info-item">
+                            <span class="info-label">Titre</span>
+                            <div class="info-value">{{ book.title }}</div>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Genre</span>
+                            <div class="info-value">{{ book.genre }}</div>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Statut</span>
+                            <div class="info-value">
+                                {% if book.status == 'en_cours' %}
+                                    <span style="color: #ff9800;"><i class="fas fa-spinner me-1"></i>En cours</span>
+                                {% elif book.status == 'termine' %}
+                                    <span style="color: #4caf50;"><i class="fas fa-check me-1"></i>Terminé</span>
+                                {% else %}
+                                    <span style="color: #9e9e9e;"><i class="fas fa-archive me-1"></i>Archivé</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="sidebar-section">
+                    <div class="sidebar-title">
+                        <i class="fas fa-chart-bar"></i> Statistiques
+                    </div>
+                    <div class="stats">
+                        <div class="stat-box">
+                            <div class="stat-number" id="charCount">0</div>
+                            <div class="stat-label">Caractères</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-number" id="paragraphCount">0</div>
+                            <div class="stat-label">Paragraphes</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="sidebar-section">
+                    <div class="sidebar-title">
+                        <i class="fas fa-cog"></i> Actions
+                    </div>
+                    <div class="action-buttons">
+                        <button class="action-btn" onclick="exportText()">
+                            <i class="fas fa-download"></i> Exporter
+                        </button>
+                        <button class="action-btn secondary" onclick="clearEditor()">
+                            <i class="fas fa-trash"></i> Effacer
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Toast Container -->
+    <div class="toast-container" id="toastContainer"></div>
+    
+    <!-- Quill Editor -->
+    <script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
+    
+    <script>
+        // Initialize Quill
+        const quill = new Quill('#editor', {
+            theme: 'snow',
+            placeholder: 'Commencez à écrire votre livre ici...',
+            modules: {
+                toolbar: [
+                    [{ 'header': [1, 2, 3, 4, 5, 6, false] }],
+                    ['bold', 'italic', 'underline', 'strike'],
+                    ['blockquote', 'code-block'],
+                    [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+                    [{ 'script': 'sub'}, { 'script': 'super' }],
+                    [{ 'indent': '-1'}, { 'indent': '+1' }],
+                    [{ 'direction': 'rtl' }],
+                    [{ 'size': ['small', false, 'large', 'huge'] }],
+                    [{ 'color': [] }, { 'background': [] }],
+                    [{ 'font': [] }],
+                    [{ 'align': [] }],
+                    ['clean']
+                ]
+            }
+        });
+
+        // Load existing content
+        const existingContent = `{{ book.content|escapejs }}`;
+        if (existingContent) {
+            quill.root.innerHTML = existingContent;
+        }
+
+        // Update stats
+        function updateStats() {
+            const text = quill.getText();
+            const words = text.trim().split(/\s+/).filter(w => w.length > 0).length;
+            const chars = text.length;
+            const paragraphs = text.split('\n').filter(p => p.trim().length > 0).length;
+            document.getElementById('wordCount').textContent = words;
+            document.getElementById('charCount').textContent = chars;
+            document.getElementById('paragraphCount').textContent = paragraphs;
+        }
+        quill.on('text-change', updateStats);
+        updateStats();
+
+
+function checkWebPlagiarism() {
+    const text = quill.getText().trim();
+    if (!text) {
+        showAlert('Écrivez du texte d’abord', 'warning');
+        return;
+    }
+
+    showAISuggestions('<div class="ai-loading"><div class="ai-spinner"></div><p>Recherche sur le web...</p></div>');
+
+    fetch('/books/api/ai/check-web-plagiarism/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+        },
+        body: JSON.stringify({ text: text })
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}`);
+        }
+        return response.json();
+    })
+    .then(result => {
+        let html = '<div class="ai-suggestion-item"><div class="ai-suggestion-title">Résultat web</div><div class="ai-suggestion-content">';
+        
+        if (result.success && result.matches.length > 0) {
+            result.matches.forEach(m => {
+                html += `<p><strong>${m.sentence}</strong><br>
+                         <a href="${m.url}" target="_blank">${m.title}</a> (${m.similarity}%)</p>`;
+            });
+        } else if (result.success) {
+            html += '<p style="color:green;">Aucun plagiat détecté sur le web !</p>';
+        } else {
+            html += `<p style="color:red;">Erreur : ${result.error}</p>`;
+        }
+        html += '</div></div>';
+        document.getElementById('aiSuggestionsContent').innerHTML = html;
+    })
+    .catch(error => {
+        console.error('Erreur:', error);
+        document.getElementById('aiSuggestionsContent').innerHTML = 
+            '<div class="ai-suggestion-item"><div class="ai-suggestion-content" style="color:red;">Erreur réseau ou serveur</div></div>';
+    });
+}
+
+        // Show custom alert
+        function showAlert(message, type = 'info') {
+            const alertDiv = document.createElement('div');
+            alertDiv.className = `alert-custom alert-${type}`;
+            alertDiv.innerHTML = `
+                ${type === 'success' ? '<i class="fas fa-check-circle"></i>' : 
+                  type === 'warning' ? '<i class="fas fa-exclamation-triangle"></i>' : 
+                  '<i class="fas fa-info-circle"></i>'}
+                ${message}
+                <button type="button" class="btn-close" onclick="this.parentElement.remove()">×</button>
+            `;
+            document.body.appendChild(alertDiv);
+            setTimeout(() => alertDiv.remove(), 6000);
+        }
+
+        // Save book (AJAX)
+        function saveBook() {
+            const content = quill.root.innerHTML;
+            document.getElementById('content').value = content;
+            
+            // Mettre à jour la valeur du champ de titre caché avec le titre actuel
+            const titleDisplay = document.querySelector('.book-title-display');
+            if (titleDisplay) {
+                const titleText = titleDisplay.textContent || titleDisplay.innerText;
+                document.getElementById('title').value = titleText.trim();
+            }
+            
+            const form = document.getElementById('editorForm');
+            const formData = new FormData(form);
+            
+            fetch(window.location.href, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showAlert('Sauvegardé avec succès !', 'success');
+                    if (data.messages && data.messages.length > 0) {
+                        data.messages.forEach(msg => {
+                            const type = msg.tags.includes('warning') ? 'warning' : 
+                                        msg.tags.includes('success') ? 'success' : 'info';
+                            showAlert(msg.text, type);
+                        });
+                    }
+                } else {
+                    showAlert('Erreur lors de la sauvegarde', 'warning');
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                showAlert('Erreur réseau', 'warning');
+            });
+        }
+        
+        // Export text
+        function exportText() {
+            const text = quill.getText();
+            const element = document.createElement('a');
+            element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(text));
+            element.setAttribute('download', '{{ book.title }}.txt');
+            element.style.display = 'none';
+            document.body.appendChild(element);
+            element.click();
+            document.body.removeChild(element);
+        }
+        
+        // Clear editor
+        function clearEditor() {
+            if (confirm('Êtes-vous sûr de vouloir effacer tout le contenu ?')) {
+                quill.setContents([]);
+                updateStats();
+            }
+        }
+        
+        // Show toast notification
+        function showToast(type, message, duration = 5000) {
+            const toastContainer = document.getElementById('toastContainer');
+            if (!toastContainer) return;
+            
+            // Create toast element
+            const toast = document.createElement('div');
+            const toastId = 'toast-' + Date.now();
+            
+            // Set toast content
+            toast.id = toastId;
+            toast.className = `toast toast-${type}`;
+            toast.innerHTML = `
+                <div class="toast-header">
+                    <div class="d-flex align-items-center">
+                        ${getToastIcon(type)}
+                        <span class="ms-2">${getToastTitle(type)}</span>
+                    </div>
+                    <button type="button" class="toast-close" onclick="dismissToast('${toastId}')">
+                        &times;
+                    </button>
+                </div>
+                <div class="toast-body">${message}</div>
+            `;
+            
+            // Add to container
+            toastContainer.appendChild(toast);
+            
+            // Show with animation
+            setTimeout(() => toast.classList.add('show'), 10);
+            
+            // Auto-dismiss
+            if (duration > 0) {
+                setTimeout(() => dismissToast(toastId), duration);
+            }
+            
+            return toastId;
+        }
+        
+        // Dismiss a specific toast
+        function dismissToast(toastId) {
+            const toast = document.getElementById(toastId);
+            if (toast) {
+                toast.classList.remove('show');
+                setTimeout(() => toast.remove(), 300);
+            }
+        }
+        
+        // Helper function to get appropriate icon for toast type
+        function getToastIcon(type) {
+            const icons = {
+                'success': 'check-circle',
+                'error': 'exclamation-circle',
+                'warning': 'exclamation-triangle',
+                'info': 'info-circle'
+            };
+            const icon = icons[type] || 'info-circle';
+            return `<i class="fas fa-${icon}"></i>`;
+        }
+        
+        // Helper function to get title for toast type
+        function getToastTitle(type) {
+            const titles = {
+                'success': 'Succès',
+                'error': 'Erreur',
+                'warning': 'Attention',
+                'info': 'Information'
+            };
+            return titles[type] || 'Notification';
+        }
+        
+        // Auto-save every 30 seconds
+        setInterval(() => {
+            if (quill.getText().trim().length > 50) {
+                document.getElementById('content').value = quill.root.innerHTML;
+                const formData = new FormData(document.getElementById('editorForm'));
+                fetch(window.location.href, {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                }).catch(() => {});
+            }
+        }, 30000);
+
+        // Export, Clear, Sidebar, AI Functions...
+        function exportText() {
+            const text = quill.getText();
+            const blob = new Blob([text], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = '{{ book.title }}.txt';
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        function clearEditor() {
+            if (confirm('Effacer tout le contenu ?')) {
+                quill.setContents([]);
+                updateStats();
+            }
+        }
+
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const toggleBtn = document.querySelector('.sidebar-toggle');
+            sidebar.classList.toggle('visible');
+            sidebar.classList.toggle('hidden');
+            toggleBtn.innerHTML = sidebar.classList.contains('visible') 
+                ? '<i class="fas fa-chevron-right"></i>' 
+                : '<i class="fas fa-chevron-left"></i>';
+        }
+
+        // Responsive sidebar
+        window.addEventListener('load', () => {
+            if (window.innerWidth <= 1200) {
+                document.getElementById('sidebar').classList.add('hidden');
+                document.querySelector('.sidebar-toggle').classList.add('show');
+            }
+        });
+
+        window.addEventListener('resize', () => {
+            const sidebar = document.getElementById('sidebar');
+            const toggleBtn = document.querySelector('.sidebar-toggle');
+            if (window.innerWidth > 1200) {
+                sidebar.classList.remove('visible', 'hidden');
+                toggleBtn.classList.remove('show');
+            } else {
+                toggleBtn.classList.add('show');
+                if (!sidebar.classList.contains('visible')) {
+                    sidebar.classList.add('hidden');
+                }
+            }
+        });
+
+        // AI Functions (inchangées)
+        function getEditorText() { return quill.getText(); }
+        function showAISuggestions(content) {
+            const panel = document.getElementById('aiSuggestionsPanel');
+            panel.classList.add('visible');
+            document.getElementById('aiSuggestionsContent').innerHTML = content;
+        }
+        function closeAISuggestions() {
+            document.getElementById('aiSuggestionsPanel').classList.remove('visible');
+        }
+        function callAIAPI(endpoint, text) {
+            return fetch(`/books/api/ai/${endpoint}/`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                },
+                body: JSON.stringify({ text })
+            }).then(r => r.json());
+        }
+        
+        function aiCorrectGrammar() {
+            const text = getEditorText();
+            if (!text.trim()) {
+                alert('Veuillez écrire du texte d\'abord');
+                return;
+            }
+            
+            showAISuggestions('<div class="ai-loading"><div class="ai-spinner"></div><p>Correction en cours...</p></div>');
+            
+            callAIAPI('correct-grammar', text).then(result => {
+                if (result.success) {
+                    let html = '';
+                    if (result.corrections.length > 0) {
+                        result.corrections.forEach((correction, index) => {
+                            html += `
+                                <div class="ai-suggestion-item">
+                                    <div class="ai-suggestion-title">Correction ${index + 1}</div>
+                                    <div class="ai-suggestion-content">
+                                        <strong>Avant :</strong> ${correction.original}<br>
+                                        <strong>Après :</strong> ${correction.corrected}
+                                    </div>
+                                </div>
+                            `;
+                        });
+                    } else {
+                        html = '<div class="ai-suggestion-item"><div class="ai-suggestion-content">✅ Aucune erreur détectée !</div></div>';
+                    }
+                    document.getElementById('aiSuggestionsContent').innerHTML = html;
+                } else {
+                    document.getElementById('aiSuggestionsContent').innerHTML = `<div class="ai-suggestion-item"><div class="ai-suggestion-content">❌ ${result.error}</div></div>`;
+                }
+            }).catch(error => {
+                document.getElementById('aiSuggestionsContent').innerHTML = `<div class="ai-suggestion-item"><div class="ai-suggestion-content">❌ Erreur : ${error.message}</div></div>`;
+            });
+        }
+        
+        function aiGenerateSynopsis() {
+            const text = getEditorText();
+            if (!text.trim()) {
+                alert('Veuillez écrire du texte d\'abord');
+                return;
+            }
+            
+            showAISuggestions('<div class="ai-loading"><div class="ai-spinner"></div><p>Génération du synopsis...</p></div>');
+            
+            callAIAPI('generate-synopsis', text).then(result => {
+                if (result.success) {
+                    const html = `
+                        <div class="ai-suggestion-item">
+                            <div class="ai-suggestion-title">Synopsis généré</div>
+                            <div class="ai-suggestion-content">${result.synopsis}</div>
+                            <div class="ai-suggestion-action">
+                                <button class="ai-suggestion-btn apply" onclick="copySynopsis('${result.synopsis.replace(/'/g, "\\'")}')">Copier</button>
+                            </div>
+                        </div>
+                    `;
+                    document.getElementById('aiSuggestionsContent').innerHTML = html;
+                } else {
+                    document.getElementById('aiSuggestionsContent').innerHTML = `<div class="ai-suggestion-item"><div class="ai-suggestion-content">❌ ${result.error}</div></div>`;
+                }
+            }).catch(error => {
+                document.getElementById('aiSuggestionsContent').innerHTML = `<div class="ai-suggestion-item"><div class="ai-suggestion-content">❌ Erreur : ${error.message}</div></div>`;
+            });
+        }
+        
+        function aiAnalyzeSentiment() {
+            const text = getEditorText();
+            if (!text.trim()) {
+                alert('Veuillez écrire du texte d\'abord');
+                return;
+            }
+            
+            showAISuggestions('<div class="ai-loading"><div class="ai-spinner"></div><p>Analyse en cours...</p></div>');
+            
+            callAIAPI('analyze-sentiment', text).then(result => {
+                if (result.success) {
+                    const html = `
+                        <div class="ai-suggestion-item">
+                            <div class="ai-suggestion-title">Analyse du sentiment</div>
+                            <div class="ai-suggestion-content">
+                                <strong>Sentiment :</strong> ${result.sentiment}<br>
+                                <strong>Confiance :</strong> ${result.confidence}%
+                            </div>
+                        </div>
+                    `;
+                    document.getElementById('aiSuggestionsContent').innerHTML = html;
+                } else {
+                    document.getElementById('aiSuggestionsContent').innerHTML = `<div class="ai-suggestion-item"><div class="ai-suggestion-content">❌ ${result.error}</div></div>`;
+                }
+            }).catch(error => {
+                document.getElementById('aiSuggestionsContent').innerHTML = `<div class="ai-suggestion-item"><div class="ai-suggestion-content">❌ Erreur : ${error.message}</div></div>`;
+            });
+        }
+        
+        function aiExtractKeywords() {
+            const text = getEditorText();
+            if (!text.trim()) {
+                alert('Veuillez écrire du texte d\'abord');
+                return;
+            }
+            
+            showAISuggestions('<div class="ai-loading"><div class="ai-spinner"></div><p>Extraction en cours...</p></div>');
+            
+            callAIAPI('extract-keywords', text).then(result => {
+                if (result.success) {
+                    let html = '<div class="ai-suggestion-item"><div class="ai-suggestion-title">Mots-clés détectés</div><div class="ai-suggestion-content">';
+                    result.keywords.forEach(kw => {
+                        html += `<span style="display: inline-block; background: #667eea; color: white; padding: 5px 10px; border-radius: 15px; margin: 5px 5px 5px 0; font-size: 0.85rem;">${kw.word} (${kw.frequency})</span>`;
+                    });
+                    html += '</div></div>';
+                    document.getElementById('aiSuggestionsContent').innerHTML = html;
+                } else {
+                    document.getElementById('aiSuggestionsContent').innerHTML = `<div class="ai-suggestion-item"><div class="ai-suggestion-content">❌ ${result.error}</div></div>`;
+                }
+            }).catch(error => {
+                document.getElementById('aiSuggestionsContent').innerHTML = `<div class="ai-suggestion-item"><div class="ai-suggestion-content">❌ Erreur : ${error.message}</div></div>`;
+            });
+        }
+        
+        function aiDetectGenre() {
+            const text = getEditorText();
+            if (!text.trim()) {
+                alert('Veuillez écrire du texte d\'abord');
+                return;
+            }
+            
+            showAISuggestions('<div class="ai-loading"><div class="ai-spinner"></div><p>Détection en cours...</p></div>');
+            
+            callAIAPI('detect-genre', text).then(result => {
+                if (result.success) {
+                    let html = '<div class="ai-suggestion-item"><div class="ai-suggestion-title">Genres détectés</div><div class="ai-suggestion-content">';
+                    result.genres.forEach(genre => {
+                        html += `<div style="margin: 10px 0;"><strong>${genre.genre}</strong> : ${genre.confidence}%</div>`;
+                    });
+                    html += '</div></div>';
+                    document.getElementById('aiSuggestionsContent').innerHTML = html;
+                } else {
+                    document.getElementById('aiSuggestionsContent').innerHTML = `<div class="ai-suggestion-item"><div class="ai-suggestion-content">❌ ${result.error}</div></div>`;
+                }
+            }).catch(error => {
+                document.getElementById('aiSuggestionsContent').innerHTML = `<div class="ai-suggestion-item"><div class="ai-suggestion-content">❌ Erreur : ${error.message}</div></div>`;
+            });
+        }
+        
+        function aiAnalyzeReadability() {
+            const text = getEditorText();
+            if (!text.trim()) {
+                alert('Veuillez écrire du texte d\'abord');
+                return;
+            }
+            
+            showAISuggestions('<div class="ai-loading"><div class="ai-spinner"></div><p>Analyse en cours...</p></div>');
+            
+            callAIAPI('analyze-readability', text).then(result => {
+                if (result.success) {
+                    const html = `
+                        <div class="ai-suggestion-item">
+                            <div class="ai-suggestion-title">Analyse de lisibilité</div>
+                            <div class="ai-suggestion-content">
+                                <strong>Lisibilité :</strong> ${result.readability}<br>
+                                <strong>Niveau :</strong> ${result.level}<br>
+                                <strong>Mots :</strong> ${result.total_words}<br>
+                                <strong>Phrases :</strong> ${result.total_sentences}<br>
+                                <strong>Longueur moyenne des phrases :</strong> ${result.avg_sentence_length} mots
+                            </div>
+                        </div>
+                    `;
+                    document.getElementById('aiSuggestionsContent').innerHTML = html;
+                } else {
+                    document.getElementById('aiSuggestionsContent').innerHTML = `<div class="ai-suggestion-item"><div class="ai-suggestion-content">❌ ${result.error}</div></div>`;
+                }
+            }).catch(error => {
+                document.getElementById('aiSuggestionsContent').innerHTML = `<div class="ai-suggestion-item"><div class="ai-suggestion-content">❌ Erreur : ${error.message}</div></div>`;
+            });
+        }
+        
+        function copySynopsis(text) {
+            navigator.clipboard.writeText(text).then(() => {
+                alert('Synopsis copié !');
+            });
+        }
+
+        // === Generation (Hugging Face) ===
+        function aiSuggestContinue() {
+            // Obtenir le texte complet et la position du curseur
+            const fullText = quill.getText();
+            const selection = quill.getSelection();
+            const cursorPosition = selection ? selection.index : fullText.length;
+            
+            // Extraire le contexte autour du curseur (100 caractères avant, 50 après)
+            const contextStart = Math.max(0, cursorPosition - 100);
+            const contextEnd = Math.min(fullText.length, cursorPosition + 50);
+            const context = fullText.substring(contextStart, contextEnd);
+            
+            if (!context.trim()) {
+                alert('Veuillez placer votre curseur là où vous voulez continuer le texte');
+                return;
+            }
+            
+            // Afficher l'état de chargement
+            showAISuggestions(`
+                <div class="ai-loading">
+                    <div class="ai-spinner"></div>
+                    <p>Génération en cours...</p>
+                    <p class="text-muted small">Analyse du contexte autour du curseur...</p>
+                </div>`);
+            
+            // Désactiver le bouton pour éviter les clics multiples
+            const continueBtn = document.querySelector('[onclick="aiSuggestContinue()"]');
+            const originalBtnText = continueBtn.innerHTML;
+            continueBtn.disabled = true;
+            continueBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Traitement...';
+            
+            // Envoyer la requête avec le contexte et la position
+            const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+            console.log('Envoi de la requête pour la continuation de texte...', { cursorPosition });
+            
+            fetch('{% url "ai_suggest_continue" %}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrfToken,
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: JSON.stringify({ 
+                    text: fullText,
+                    context: context,
+                    cursor_position: cursorPosition,
+                    params: { 
+                        max_new_tokens: 100, 
+                        num_return_sequences: 3, 
+                        temperature: 0.8, 
+                        top_p: 0.9 
+                    } 
+                }),
+                credentials: 'same-origin'
+            })
+            .then(response => {
+                console.log('Réponse reçue:', response);
+                if (!response.ok) {
+                    return response.json().then(err => {
+                        throw new Error(err.error || `Erreur HTTP: ${response.status}`);
+                    });
+                }
+                return response.json();
+            })
+            .then(result => {
+                console.log('Résultat:', result);
+                
+                if (result.success && result.suggestions && result.suggestions.length > 0) {
+                    let html = `
+                        <div class="ai-suggestion-item">
+                            <div class="ai-suggestion-title">
+                                <i class="fas fa-arrow-right me-2"></i>Suggestions de continuation
+                                <button class="btn btn-sm btn-outline-secondary float-end" onclick="closeAISuggestions()">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                            <div class="ai-suggestion-content">
+                                <p class="mb-3">Voici quelques suggestions pour continuer votre texte :</p>
+                                <div class="suggestions-list">`;
+                    
+                    result.suggestions.forEach((suggestion, index) => {
+                        if (suggestion && suggestion.trim()) {
+                            // Échapper les guillemets simples et doubles pour l'utilisation dans l'attribut onclick
+                            const escapedSuggestion = suggestion.replace(/'/g, "\\'").replace(/"/g, '&quot;');
+                            html += `
+                                <div class="suggestion-item mb-3 p-3 border rounded">
+                                    <div class="d-flex justify-content-between align-items-start mb-2">
+                                        <strong>Option ${index + 1}:</strong>
+                                        <button class="btn btn-sm btn-outline-primary" 
+                                                onclick="useAISuggestion('${escapedSuggestion}', 'continue')">
+                                            <i class="fas fa-plus-circle me-1"></i> Insérer
+                                        </button>
+                                    </div>
+                                    <div class="suggestion-text">${suggestion.replace(/\n/g, '<br>')}</div>
+                                </div>`;
+                        }
+                    });
+                    
+                    html += `
+                                </div>
+                            </div>
+                        </div>`;
+                    
+                    document.getElementById('aiSuggestionsContent').innerHTML = html;
+                } else {
+                    const errorMsg = result.error || 'Aucune suggestion n\'a pu être générée. Veuillez essayer avec un texte plus long ou différent.';
+                    showError(errorMsg);
+                }
+            })
+            .catch(error => {
+                console.error('Erreur lors de la génération des suggestions:', error);
+                let errorMessage = 'Une erreur est survenue lors de la génération des suggestions.';
+                
+                if (error.message.includes('model') || error.message.includes('charger')) {
+                    errorMessage = 'Le service de génération de texte n\'est pas disponible pour le moment. Veuillez réessayer plus tard ou contacter le support.';
+                }
+                
+                showError(`${errorMessage} (${error.message || 'Détails non disponibles'})`);
+            })
+            .finally(() => {
+                // Réactiver le bouton
+                continueBtn.disabled = false;
+                continueBtn.innerHTML = originalBtnText;
+            });
+        }
+
+        function aiRewrite() {
+            console.log("Fonction aiRewrite appelée");
+            
+            // Récupérer le texte sélectionné ou tout le texte
+            let text = '';
+            const selection = quill.getSelection();
+            
+            if (selection && selection.length > 0) {
+                // Si du texte est sélectionné, on ne prend que la sélection
+                text = quill.getText(selection.index, selection.length);
+                console.log("Texte sélectionné:", text);
+                
+                // Stocker la sélection pour une utilisation ultérieure
+                window.currentSelection = {
+                    index: selection.index,
+                    length: selection.length,
+                    text: text
+                };
+            } else {
+                // Sinon, on prend tout le texte
+                text = getEditorText();
+                console.log("Tout le texte:", text);
+                
+                // Réinitialiser la sélection
+                window.currentSelection = null;
+            }
+            
+            if (!text.trim()) {
+                showAISuggestions(`
+                    <div class="ai-suggestion-item">
+                        <div class="ai-suggestion-title">
+                            <i class="fas fa-exclamation-triangle text-warning"></i> 
+                            Texte manquant
+                        </div>
+                        <div class="ai-suggestion-content">
+                            <p>Veuillez sélectionner ou écrire du texte à améliorer.</p>
+                        </div>
+                    </div>
+                `);
+                return;
+            }
+            
+            // Afficher le chargement
+            showAISuggestions(`
+                <div class="ai-loading">
+                    <div class="ai-spinner"></div>
+                    <p>Amélioration du texte en cours...</p>
+                    <p class="text-muted small">Veuillez patienter pendant le traitement</p>
+                </div>
+            `);
+            
+            // Préparer les données pour l'API
+            const data = { 
+                text: text,
+                max_new_tokens: 150 
+            };
+            
+            console.log("Envoi des données à l'API:", data);
+            
+            // Appeler l'API
+            fetch('/books/api/ai/rewrite-text/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: JSON.stringify(data)
+            })
+            .then(response => {
+                console.log("Réponse reçue, statut:", response.status);
+                if (!response.ok) {
+                    throw new Error(`Erreur HTTP: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(result => {
+                console.log("Réponse complète du serveur:", result);
+                
+                if (result.success) {
+                    let html = `
+                        <div class="ai-suggestion-item">
+                            <div class="ai-suggestion-title">
+                                <i class="fas fa-magic"></i> 
+                                Texte amélioré
+                            </div>
+                            <div class="ai-suggestion-content">
+                    `;
+                    
+                    if (result.rewrites && result.rewrites.length > 0) {
+                        // Afficher toutes les suggestions
+                        result.rewrites.forEach((rewrite, index) => {
+                            console.log(`Suggestion ${index + 1}:`, rewrite);
+                            
+                            // Vérifier si rewrite est un objet avec une propriété 'text' ou une chaîne
+                            const rewriteText = typeof rewrite === 'object' ? rewrite.text : rewrite;
+                            const style = rewrite.style || `Suggestion ${index + 1}`;
+                            const safeRw = rewriteText.replace(/\n/g, '\\n').replace(/'/g, "\\'");
+                            
+                            html += `
+                                <div class="suggestion-option mb-3 p-2 border rounded">
+                                    <div class="suggestion-style fw-bold mb-2">${style}</div>
+                                    <div class="suggestion-text">${rewriteText.replace(/\n/g, '<br>')}</div>
+                                    <div class="suggestion-actions mt-2">
+                                        <button onclick="useAISuggestion('${safeRw}', 'rewrite')" 
+                                                class="btn btn-sm btn-primary">
+                                            <i class="fas fa-plus-circle"></i> Améliorer
+                                        </button>
+                                    </div>
+                                </div>
+                            `;
+                        });
+                    } else {
+                        console.log("Aucune réécriture retournée dans la réponse");
+                        html += `
+                            <div class="alert alert-warning">
+                                <i class="fas fa-info-circle"></i>
+                                Aucune amélioration n'a pu être suggérée pour ce texte.
+                            </div>
+                            <div class="mt-2">
+                                <button class="btn btn-sm btn-secondary" onclick="aiRewrite()">
+                                    <i class="fas fa-sync"></i> Réessayer
+                                </button>
+                            </div>
+                        `;
+                    }
+                    
+                    html += `
+                            </div>
+                        </div>
+                    `;
+                    
+                    document.getElementById('aiSuggestionsContent').innerHTML = html;
+                } else {
+                    document.getElementById('aiSuggestionsContent').innerHTML = `
+                        <div class="ai-suggestion-item">
+                            <div class="ai-suggestion-content error">
+                                <i class="fas fa-exclamation-triangle"></i>
+                                ${result.error || 'Une erreur est survenue lors de la réécriture'}
+                            </div>
+                        </div>
+                    `;
+                }
+            })
+            .catch(error => {
+                console.error("Erreur lors de l'appel à l'API:", error);
+                document.getElementById('aiSuggestionsContent').innerHTML = `
+                    <div class="ai-suggestion-item">
+                        <div class="ai-suggestion-content error">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            Erreur de connexion au serveur. Veuillez réessayer plus tard.
+                            <div class="error-details">${error.message}</div>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        function aiSuggestTitles() {
+            const text = getEditorText().trim();
+            if (!text) {
+                alert('Veuillez écrire du texte d\'abord');
+                return;
+            }
+            
+            // Afficher l'état de chargement
+            showAISuggestions(`
+                <div class="ai-loading">
+                    <div class="ai-spinner"></div>
+                    <p>Analyse du texte en cours...</p>
+                    <p class="text-muted small">Veuillez patienter, cela peut prendre quelques secondes.</p>
+                </div>`);
+            
+            console.log('Envoi de la requête pour la suggestion de titres...');
+            
+            // Désactiver le bouton pour éviter les clics multiples
+            const suggestBtn = document.querySelector('[onclick="aiSuggestTitles()"]');
+            const originalBtnText = suggestBtn.innerHTML;
+            suggestBtn.disabled = true;
+            suggestBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Traitement...';
+            
+            // Envoyer la requête
+            const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+            console.log('CSRF Token:', csrfToken ? 'Présent' : 'Manquant');
+            
+            fetch('{% url "ai_suggest_titles" %}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrfToken,
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: JSON.stringify({ 
+                    text: text, 
+                    num_titles: 5 
+                }),
+                credentials: 'same-origin'
+            })
+            .then(response => {
+                console.log('Réponse reçue:', response);
+                if (!response.ok) {
+                    throw new Error(`Erreur HTTP: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(result => {
+                console.log('Résultat:', result);
+                
+                if (result.success && result.titles && result.titles.length > 0) {
+                    let html = `
+                        <div class="ai-suggestion-item">
+                            <div class="ai-suggestion-title">
+                                <i class="fas fa-lightbulb me-2"></i>Titres suggérés
+                                <button class="btn btn-sm btn-outline-secondary float-end" onclick="closeAISuggestions()">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                            <div class="ai-suggestion-content">
+                                <p class="mb-2">Voici quelques suggestions de titres basées sur votre texte :</p>
+                                <ul class="list-group">`;
+                    
+                    result.titles.forEach(t => { 
+                        // Échapper les caractères spéciaux pour le HTML et JavaScript
+                        const safeTitle = t
+                            .replace(/&/g, '&amp;')
+                            .replace(/"/g, '&quot;')
+                            .replace(/'/g, '&#39;')
+                            .replace(/</g, '&lt;')
+                            .replace(/>/g, '&gt;');
+                            
+                        html += `
+                                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                                        ${t}
+                                        <button class="btn btn-sm btn-outline-primary" onclick="useAISuggestion('${safeTitle.replace(/'/g, "\\'")}')">
+                                            <i class="fas fa-check"></i> Utiliser
+                                        </button>
+                                    </li>`; 
+                    });
+                    
+                    html += `
+                                </ul>
+                            </div>
+                        </div>`;
+                    
+                    document.getElementById('aiSuggestionsContent').innerHTML = html;
+                } else {
+                    const errorMsg = result.error || 'Aucun titre n\'a pu être généré. Veuillez essayer avec un texte plus long ou différent.';
+                    showError(errorMsg);
+                }
+            })
+            .catch(error => {
+                console.error('Erreur lors de la récupération des suggestions:', error);
+                let errorMessage = 'Une erreur est survenue lors de la génération des titres.';
+                
+                // Afficher plus de détails d'erreur en mode débogage
+                if (error.response) {
+                    // La requête a été faite et le serveur a répondu avec un code d'état
+                    // qui n'est pas dans la plage 2xx
+                    console.error('Détails de l\'erreur:', {
+                        status: error.response.status,
+                        statusText: error.response.statusText,
+                        data: error.response.data
+                    });
+                    errorMessage += ` (${error.response.status} ${error.response.statusText})`;
+                } else if (error.request) {
+                    // La requête a été faite mais aucune réponse n'a été reçue
+                    console.error('Aucune réponse du serveur:', error.request);
+                    errorMessage = 'Le serveur ne répond pas. Vérifiez votre connexion Internet et réessayez.';
+                } else {
+                    // Une erreur s'est produite lors de la configuration de la requête
+                    console.error('Erreur de configuration de la requête:', error.message);
+                    errorMessage += ` (${error.message})`;
+                }
+                
+                showError(errorMessage);
+            })
+            .finally(() => {
+                // Réactiver le bouton
+                suggestBtn.disabled = false;
+                suggestBtn.innerHTML = originalBtnText;
+            });
+            
+            function showError(message) {
+                document.getElementById('aiSuggestionsContent').innerHTML = `
+                    <div class="alert alert-danger">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        ${message}
+                        <button type="button" class="btn-close float-end" onclick="closeAISuggestions()"></button>
+                    </div>`;
+            }
+        }
+        
+        // Fonction pour utiliser une suggestion d'IA
+        function useAISuggestion(text, type = 'title') {
+            console.log('useAISuggestion appelée avec:', {text, type});
+            try {
+                // Nettoyer le texte des séquences d'échappement JSON
+                text = text.replace(/\\n/g, '\n').replace(/\\'/g, "'");
+                if (type === 'title') {
+                    console.log('Traitement du titre:', text);
+                    
+                    // Mettre à jour directement l'affichage du titre dans l'en-tête
+                    const titleDisplay = document.querySelector('.book-title-display');
+                    if (titleDisplay) {
+                        console.log('Mise à jour de l\'affichage du titre');
+                        titleDisplay.innerHTML = `<i class="fas fa-pen-fancy me-2"></i>${text}`;
+                        
+                        // Mettre à jour également le titre de l'onglet
+                        document.title = text + ' - Éditeur';
+                        
+                        // Mettre à jour le champ de formulaire caché s'il existe
+                        let titleInput = document.querySelector('input[name="title"], #id_title');
+                        if (titleInput) {
+                            console.log('Mise à jour du champ de formulaire');
+                            titleInput.value = text;
+                            // Déclencher les événements pour mettre à jour les écouteurs
+                            titleInput.dispatchEvent(new Event('input'));
+                            titleInput.dispatchEvent(new Event('change'));
+                            
+                            // Sauvegarder automatiquement le livre
+                            saveBook();
+                        } else {
+                            console.log('Aucun champ de formulaire trouvé, mise à jour de l\'affichage uniquement');
+                        }
+                        
+                        // Afficher un message de succès
+                        showSuccessMessage('Le titre a été mis à jour avec succès !');
+                        
+                        // Fermer le panneau des suggestions
+                        closeAISuggestions();
+                        
+                        return; // Sortir de la fonction après avoir traité le titre
+                    } else {
+                        console.error('Élément .book-title-display non trouvé dans le DOM');
+                        alert('Impossible de trouver l\'élément d\'affichage du titre.');
+                        return;
+                    }
+                    
+                    // Si on a trouvé le champ de titre
+                    if (titleInput) {
+                        console.log('Champ de titre trouvé:', titleInput);
+                        titleInput.value = text;
+                        
+                        // Déclencher les événements pour mettre à jour les écouteurs
+                        titleInput.dispatchEvent(new Event('input'));
+                        titleInput.dispatchEvent(new Event('change'));
+                        
+                        // Mettre à jour l'affichage du titre dans le header
+                        const titleDisplay = document.querySelector('.book-title-display');
+                        if (titleDisplay) {
+                            // Conserver l'icône et mettre à jour uniquement le texte
+                            const icon = titleDisplay.querySelector('i');
+                            if (icon) {
+                                titleDisplay.innerHTML = icon.outerHTML + ' ' + text;
+                            } else {
+                                titleDisplay.textContent = text;
+                            }
+                            
+                            // Mettre à jour également le titre de l'onglet
+                            document.title = text + ' - Éditeur';
+                        }
+                        
+                        // Afficher un message de succès
+                        showSuccessMessage('Le titre a été mis à jour avec succès !');
+                        
+                        // Fermer le panneau des suggestions
+                        closeAISuggestions();
+                        
+                        // Sauvegarder automatiquement le livre
+                        saveBook();
+                        
+                        return; // Sortir de la fonction après avoir traité le titre
+                    } else {
+                        console.error('Aucun champ de titre trouvé dans le DOM');
+                        alert('Impossible de trouver le champ de titre dans la page.');
+                        return;
+                    }
+                }
+                else if (type === 'continue' || type === 'rewrite') {
+                    // S'assurer que l'éditeur Quill est disponible
+                    if (typeof quill !== 'undefined') {
+                        const range = quill.getSelection();
+                        
+                        if (type === 'rewrite' && range && range.length > 0) {
+                            // Pour la réécriture, remplacer le texte sélectionné
+                            const delta = quill.clipboard.convert({
+                                html: text.replace(/\n/g, '<br>')
+                            });
+                            quill.deleteText(range.index, range.length);
+                            quill.clipboard.dangerouslyPasteHTML(range.index, text.replace(/\n/g, '<br>'));
+                            // Sélectionner le texte inséré
+                            quill.setSelection(range.index + text.length, 0);
+                        } else {
+                            // Pour continuer, insérer à la position actuelle
+                            const index = range ? range.index : quill.getLength() - 1;
+                            
+                            // Ajouter un espace avant si nécessaire
+                            const prefix = (index > 0 && quill.getText(index - 1, 1) !== ' ' && index < quill.getLength() - 1) ? ' ' : '';
+                            
+                            // Préparer le texte avec les sauts de ligne correctement formatés
+                            const formattedText = text.replace(/\n/g, '\n');
+                            
+                            // Insérer le texte avec mise en forme
+                            quill.insertText(index, prefix);
+                            quill.clipboard.dangerouslyPasteHTML(index + prefix.length, formattedText.replace(/\n/g, '<br>'));
+                            
+                            // Déplacer le curseur après le texte inséré
+                            quill.setSelection(index + prefix.length + formattedText.length + 1, 0);
+                        }
+                        
+                        // Donner le focus à l'éditeur
+                        quill.focus();
+                        
+                        showToast('success', 'Le texte a été inséré avec succès !');
+                    } else {
+                        console.error('Erreur: L\'éditeur Quill n\'est pas disponible');
+                        showToast('error', 'Impossible d\'accéder à l\'éditeur de texte');
+                    }
+                }
+                
+                // Fermer le panneau des suggestions
+                closeAISuggestions();
+                
+            } catch (error) {
+                console.error('Erreur dans useAISuggestion:', error);
+                showToast('error', 'Une erreur est survenue lors de l\'insertion du texte.');
+            }
+        }
+    </script>
+</body>
+
+</html>

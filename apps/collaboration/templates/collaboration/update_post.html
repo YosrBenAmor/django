@@ -1,0 +1,161 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Modifier la Collaboration - ArtCollab</title>
+    <link rel="icon" type="image/png" href="{% static 'assets/img/favicon/homework.png' %}">
+    <link rel="stylesheet" href="{% static 'assets/css/volt.css' %}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* Styles comme avant : couleurs, gradients, formulaire, hero, boutons */
+        :root {
+            --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --dark-bg: #0f0f1a;
+            --darker-bg: #0a0a12;
+            --card-bg: #1a1a2e;
+            --border-color: #2d2d4d;
+            --text-primary: #ffffff;
+            --text-secondary: #b0b0cc;
+            --card-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+        body { background: var(--dark-bg); color: var(--text-primary); font-family: 'Segoe UI', sans-serif; }
+        .form-container { max-width: 800px; margin: 2rem auto; padding: 2rem; background: var(--card-bg); border-radius: 16px; box-shadow: var(--card-shadow); border: 1px solid var(--border-color); }
+        .form-group { margin-bottom: 1.5rem; }
+        .form-label { display: block; margin-bottom: 0.5rem; font-weight: 600; }
+        .form-control, .form-textarea { width: 100%; padding: 0.75rem 1rem; border-radius: 10px; border: 2px solid var(--border-color); background: var(--darker-bg); color: var(--text-primary); font-size: 1rem; transition: all 0.3s; }
+        .form-control:focus, .form-textarea:focus { border-color: #ff9a56; outline: none; background: #232340; }
+        .form-textarea { min-height: 150px; resize: vertical; }
+        .file-upload-area { border: 2px dashed var(--border-color); border-radius: 10px; padding: 2rem; text-align: center; cursor: pointer; transition: all 0.3s; background: var(--darker-bg); }
+        .file-upload-area.dragover { border-color: #ff9a56; background: rgba(255,154,86,0.2); }
+        .image-preview { max-width: 200px; max-height: 200px; display: none; margin-top: 1rem; border-radius: 10px; border: 1px solid var(--border-color); }
+        .current-image { max-width: 300px; max-height: 200px; border-radius: 10px; margin-bottom: 1rem; border: 1px solid var(--border-color); }
+        .btn-success-custom { background: linear-gradient(135deg, #56ab2f 0%, #a8e6cf 100%); border: none; padding: 0.75rem 2rem; border-radius: 10px; color: #fff; font-weight: 600; transition: all 0.3s; }
+        .btn-success-custom:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(86,171,47,0.4); }
+        .text-danger { color: #dc3545; }
+        .character-count { font-size: 0.875rem; color: #b0b0cc; text-align: right; margin-top: 0.25rem; }
+        .character-count.warning { color: #ffc107; }
+        .character-count.danger { color: #dc3545; }
+    </style>
+</head>
+<body>
+    {% include 'includes/header.html' %}
+    <div class="container">
+        <div class="form-container">
+            <h2>Modifier la Collaboration</h2>
+            <form method="post" enctype="multipart/form-data" id="editForm">
+                {% csrf_token %}
+
+                {% if form.non_field_errors %}
+                    <div class="text-danger mb-2">{{ form.non_field_errors }}</div>
+                {% endif %}
+
+
+                <div class="form-group">
+    <label class="form-label">Livre associé</label>
+    {{ form.book }}
+    {% if form.book.errors %}
+        <div class="text-danger">{{ form.book.errors }}</div>
+    {% endif %}
+</div>
+                <!-- Titre -->
+                <div class="form-group">
+                    <label class="form-label">Titre</label>
+                    <input type="text" name="title" class="form-control" maxlength="100" value="{{ form.title.value|default:'' }}">
+                    {% if form.title.errors %}<div class="text-danger">{{ form.title.errors }}</div>{% endif %}
+                    <div class="character-count" id="titleCount">0/100 caractères</div>
+                </div>
+
+                <!-- Description -->
+                <div class="form-group">
+                    <label class="form-label">Description</label>
+                    <textarea name="content" class="form-control form-textarea" maxlength="2000">{{ form.content.value|default:'' }}</textarea>
+                    {% if form.content.errors %}<div class="text-danger">{{ form.content.errors }}</div>{% endif %}
+                    <div class="character-count" id="contentCount">0/2000 caractères</div>
+                </div>
+
+                <!-- Image actuelle -->
+                {% if post.image %}
+                <div class="form-group">
+                    <label>Image actuelle</label>
+                    <img src="{{ post.image.url }}" class="current-image" alt="Image actuelle">
+                    <div class="form-check">
+                        <input type="checkbox" name="image-clear" id="image-clear" class="form-check-input">
+                        <label class="form-check-label text-danger" for="image-clear">Supprimer l'image actuelle</label>
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Nouvelle image -->
+                <div class="form-group">
+                    <label>{% if post.image %}Changer l'image{% else %}Ajouter une image{% endif %}</label>
+                    <div class="file-upload-area" id="fileUploadArea">
+                        <p>Glissez-déposez ou cliquez pour sélectionner un fichier</p>
+                        <input type="file" name="image" class="d-none" accept="image/*">
+                    </div>
+                    <div class="text-center">
+                        <img id="imagePreview" class="image-preview" alt="Aperçu">
+                    </div>
+                    {% if form.image.errors %}<div class="text-danger">{{ form.image.errors }}</div>{% endif %}
+                </div>
+
+                <div class="d-flex justify-content-between mt-3">
+                    <a href="{% url 'collaboration_detail' post.id %}" class="btn btn-outline-secondary">Annuler</a>
+                    <button type="submit" class="btn btn-success-custom">Enregistrer</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function(){
+            const titleInput = document.querySelector('input[name="title"]');
+            const titleCount = document.getElementById('titleCount');
+            const contentInput = document.querySelector('textarea[name="content"]');
+            const contentCount = document.getElementById('contentCount');
+
+            function updateCount(input, counter, limit1, limit2){
+                const count = input.value.length;
+                counter.textContent = `${count}/${input.maxLength} caractères`;
+                counter.className = 'character-count';
+                if(count > limit2) counter.classList.add('danger');
+                else if(count > limit1) counter.classList.add('warning');
+            }
+
+            if(titleInput){ titleInput.addEventListener('input',()=>updateCount(titleInput,titleCount,80,100)); titleInput.dispatchEvent(new Event('input')); }
+            if(contentInput){ contentInput.addEventListener('input',()=>updateCount(contentInput,contentCount,1500,1800)); contentInput.dispatchEvent(new Event('input')); }
+
+            // Gestion du drag & drop
+            const fileInput = document.querySelector('input[name="image"]');
+            const fileArea = document.getElementById('fileUploadArea');
+            const preview = document.getElementById('imagePreview');
+
+            fileArea.addEventListener('click',()=>fileInput.click());
+
+            fileInput.addEventListener('change', function(){
+                if(this.files && this.files[0]){
+                    const reader = new FileReader();
+                    reader.onload = e => { preview.src = e.target.result; preview.style.display = 'block'; }
+                    reader.readAsDataURL(this.files[0]);
+                }
+            });
+
+            ['dragenter','dragover','dragleave','drop'].forEach(e => fileArea.addEventListener(e, ev => ev.preventDefault()));
+            ['dragenter','dragover'].forEach(e => fileArea.addEventListener(e, ()=>fileArea.classList.add('dragover')));
+            ['dragleave','drop'].forEach(e => fileArea.addEventListener(e, ()=>fileArea.classList.remove('dragover')));
+            fileArea.addEventListener('drop', function(e){
+                fileInput.files = e.dataTransfer.files;
+                fileInput.dispatchEvent(new Event('change'));
+            });
+
+            // Confirmation suppression image
+            const imageClear = document.getElementById('image-clear');
+            if(imageClear){
+                imageClear.addEventListener('change', function(){
+                    if(this.checked && !confirm("Voulez-vous vraiment supprimer l'image actuelle ?")) this.checked=false;
+                });
+            }
+        });
+    </script>
+</body>
+</html>
